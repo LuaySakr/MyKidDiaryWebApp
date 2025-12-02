@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyKidDiary - Your Personal Secret Diary</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>🔒 MyKidDiary</h1>
+            </div>
+            <div class="nav-menu" id="navMenu">
+                <button class="btn btn-secondary" onclick="showSection('login')">Login</button>
+                <button class="btn btn-primary" onclick="showSection('register')">Sign Up</button>
+            </div>
+            <div class="nav-menu-auth hidden" id="navMenuAuth">
+                <span class="username-display" id="usernameDisplay"></span>
+                <button class="btn btn-secondary" onclick="showSection('feed')">Feed</button>
+                <button class="btn btn-secondary" onclick="showSection('my-posts')">My Diary</button>
+                <button class="btn btn-secondary" onclick="showSection('create-post')">Write Secret</button>
+                <button class="btn btn-secondary" onclick="showSection('profile')">Profile</button>
+                <button class="btn btn-danger" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section (Landing) -->
+    <section id="hero" class="section hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1>Welcome to MyKidDiary</h1>
+                <p class="hero-subtitle">Your personal space to write your secrets, thoughts, and memories</p>
+                <p class="hero-description">
+                    Share your stories with friends, keep them private, or share with specific people you trust.
+                    Connect with others through following and create your own diary community.
+                </p>
+                <div class="hero-buttons">
+                    <button class="btn btn-primary btn-large" onclick="showSection('register')">Get Started</button>
+                    <button class="btn btn-secondary btn-large" onclick="showSection('login')">Login</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Login Section -->
+    <section id="login" class="section hidden">
+        <div class="container">
+            <div class="form-container">
+                <h2>Login to Your Diary</h2>
+                <form id="loginForm" onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label for="loginUsername">Username</label>
+                        <input type="text" id="loginUsername" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Password</label>
+                        <input type="password" id="loginPassword" required>
+                    </div>
+                    <div class="error-message" id="loginError"></div>
+                    <button type="submit" class="btn btn-primary btn-block">Login</button>
+                    <p class="form-footer">
+                        Don't have an account? 
+                        <a href="#" onclick="showSection('register'); return false;">Sign up</a>
+                    </p>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Register Section -->
+    <section id="register" class="section hidden">
+        <div class="container">
+            <div class="form-container">
+                <h2>Create Your Diary Account</h2>
+                <form id="registerForm" onsubmit="handleRegister(event)">
+                    <div class="form-group">
+                        <label for="registerUsername">Username</label>
+                        <input type="text" id="registerUsername" required minlength="3" maxlength="30">
+                    </div>
+                    <div class="form-group">
+                        <label for="registerEmail">Email</label>
+                        <input type="email" id="registerEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerPassword">Password</label>
+                        <input type="password" id="registerPassword" required minlength="6">
+                    </div>
+                    <div class="error-message" id="registerError"></div>
+                    <button type="submit" class="btn btn-primary btn-block">Sign Up</button>
+                    <p class="form-footer">
+                        Already have an account? 
+                        <a href="#" onclick="showSection('login'); return false;">Login</a>
+                    </p>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Feed Section -->
+    <section id="feed" class="section hidden">
+        <div class="container">
+            <h2>Your Feed</h2>
+            <div class="posts-container" id="feedPosts">
+                <div class="loading">Loading posts...</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- My Posts Section -->
+    <section id="my-posts" class="section hidden">
+        <div class="container">
+            <h2>My Diary Entries</h2>
+            <div class="posts-container" id="myPosts">
+                <div class="loading">Loading your posts...</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Create/Edit Post Section -->
+    <section id="create-post" class="section hidden">
+        <div class="container">
+            <div class="form-container">
+                <h2 id="postFormTitle">Write a New Secret</h2>
+                <form id="postForm" onsubmit="handlePostSubmit(event)">
+                    <input type="hidden" id="postId" value="">
+                    <div class="form-group">
+                        <label for="postTitle">Title</label>
+                        <input type="text" id="postTitle" required maxlength="200">
+                    </div>
+                    <div class="form-group">
+                        <label for="postContent">Your Secret</label>
+                        <textarea id="postContent" rows="8" required maxlength="10000"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="postPrivacy">Who can see this?</label>
+                        <select id="postPrivacy" onchange="handlePrivacyChange()">
+                            <option value="private">Only Me (Private)</option>
+                            <option value="followers">My Followers</option>
+                            <option value="specific">Specific People</option>
+                            <option value="public">Everyone (Public)</option>
+                        </select>
+                    </div>
+                    <div class="form-group hidden" id="sharedWithGroup">
+                        <label for="sharedWithSearch">Share with (search usernames):</label>
+                        <input type="text" id="sharedWithSearch" placeholder="Search users...">
+                        <div class="search-results" id="searchResults"></div>
+                        <div class="selected-users" id="selectedUsers"></div>
+                    </div>
+                    <div class="error-message" id="postError"></div>
+                    <div class="form-buttons">
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <button type="button" class="btn btn-secondary" onclick="cancelPostEdit()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Profile Section -->
+    <section id="profile" class="section hidden">
+        <div class="container">
+            <div class="profile-container">
+                <h2>My Profile</h2>
+                <div id="profileContent">
+                    <div class="loading">Loading profile...</div>
+                </div>
+                <div class="profile-form hidden" id="profileForm">
+                    <h3>Edit Profile</h3>
+                    <div class="form-group">
+                        <label for="profileBio">Bio</label>
+                        <textarea id="profileBio" rows="4" maxlength="500"></textarea>
+                    </div>
+                    <button class="btn btn-primary" onclick="updateProfile()">Save Changes</button>
+                </div>
+                
+                <div class="search-section">
+                    <h3>Find Friends</h3>
+                    <div class="form-group">
+                        <input type="text" id="userSearch" placeholder="Search users...">
+                        <button class="btn btn-secondary" onclick="searchUsers()">Search</button>
+                    </div>
+                    <div id="userSearchResults"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="/js/app.js"></script>
+</body>
+</html>
