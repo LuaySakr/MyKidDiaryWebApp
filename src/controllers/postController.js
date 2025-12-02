@@ -83,7 +83,7 @@ exports.getPost = async (req, res) => {
     const canView = 
       post.author._id.toString() === req.userId ||
       post.privacy === 'public' ||
-      (post.privacy === 'followers' && currentUser.following.includes(post.author._id.toString())) ||
+      (post.privacy === 'followers' && currentUser.following.some(id => id.toString() === post.author._id.toString())) ||
       (post.privacy === 'specific' && post.sharedWith.some(user => user._id.toString() === req.userId));
 
     if (!canView) {

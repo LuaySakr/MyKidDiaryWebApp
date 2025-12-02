@@ -40,7 +40,26 @@ router.get('/my-posts', auth, postController.getMyPosts);
 router.get('/:postId', auth, postController.getPost);
 
 // Update a post
-router.put('/:postId', auth, postController.updatePost);
+router.put('/:postId', 
+  auth,
+  [
+    body('title')
+      .optional()
+      .trim()
+      .isLength({ max: 200 })
+      .withMessage('Title must not exceed 200 characters'),
+    body('content')
+      .optional()
+      .trim()
+      .isLength({ max: 10000 })
+      .withMessage('Content must not exceed 10000 characters'),
+    body('privacy')
+      .optional()
+      .isIn(['private', 'followers', 'specific', 'public'])
+      .withMessage('Invalid privacy setting')
+  ],
+  postController.updatePost
+);
 
 // Delete a post
 router.delete('/:postId', auth, postController.deletePost);
