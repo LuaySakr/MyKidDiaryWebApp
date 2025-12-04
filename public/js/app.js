@@ -36,7 +36,10 @@ function showSection(sectionName) {
         } else if (sectionName === 'profile' && authToken) {
             loadProfile();
         } else if (sectionName === 'create-post') {
-            resetPostForm();
+            // Only reset form if not editing (i.e., no postId set)
+            if (!document.getElementById('postId') || !document.getElementById('postId').value) {
+                resetPostForm();
+            }
         }
     }
 }
@@ -68,7 +71,15 @@ async function handleRegister(event) {
             showSection('feed');
             showSuccess('Account created successfully!');
         } else {
-            showError('registerError', data.message || 'Registration failed');
+            let errorMsg = data.message || 'Registration failed';
+            if (data.errors) {
+                // Express-validator errors
+                errorMsg += ': ' + data.errors.map(e => `${e.param || e.path}: ${e.msg || e.message}`).join(', ');
+            } else if (typeof data.errors === 'object') {
+                // Mongoose validation errors
+                errorMsg += ': ' + Object.values(data.errors).map(e => `${e.path}: ${e.message}`).join(', ');
+            }
+            showError('registerError', errorMsg);
         }
     } catch (error) {
         showError('registerError', 'Network error. Please try again.');
@@ -291,21 +302,21 @@ async function editPost(postId) {
         });
 
         if (response.ok) {
+            showSection('create-post');
             const post = await response.json();
-            
+
             document.getElementById('postId').value = post._id;
             document.getElementById('postTitle').value = post.title;
             document.getElementById('postContent').value = post.content;
             document.getElementById('postPrivacy').value = post.privacy;
             document.getElementById('postFormTitle').textContent = 'Edit Your Secret';
-            
+
             if (post.privacy === 'specific' && post.sharedWith) {
                 selectedUsersForSharing = post.sharedWith.map(u => u._id);
                 updateSelectedUsers(post.sharedWith);
             }
-            
+
             handlePrivacyChange();
-            showSection('create-post');
         }
     } catch (error) {
         alert('Failed to load post');

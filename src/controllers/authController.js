@@ -8,7 +8,7 @@ exports.register = async (req, res) => {
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json({ message: 'Validation failed', errors: errors.array() });
     }
 
     const { username, email, password } = req.body;
@@ -45,6 +45,15 @@ exports.register = async (req, res) => {
     });
   } catch (error) {
     console.error('Registration error:', error);
+    // Handle MongoDB duplicate key error
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyValue)[0];
+      return res.status(400).json({ message: `Duplicate value for field: ${field}` });
+    }
+    // Handle validation errors from Mongoose
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ message: 'Validation failed', errors: error.errors });
+    }
     res.status(500).json({ message: 'Server error during registration' });
   }
 };

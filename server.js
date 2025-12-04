@@ -43,7 +43,7 @@ app.use('/api/auth', authLimiter, require('./src/routes/auth'));
 app.use('/api/posts', require('./src/routes/posts'));
 
 // Serve the main HTML page for all non-API routes
-app.get('*', (req, res) => {
+app.use((req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
