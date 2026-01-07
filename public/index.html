@@ -22,6 +22,7 @@
                 <button class="btn btn-secondary" onclick="showSection('feed')">Feed</button>
                 <button class="btn btn-secondary" onclick="showSection('my-posts')">My Diary</button>
                 <button class="btn btn-secondary" onclick="showSection('create-post')">Write Secret</button>
+                <button class="btn btn-secondary" onclick="showSection('connections')">Connections</button>
                 <button class="btn btn-secondary" onclick="showSection('profile')">Profile</button>
                 <button class="btn btn-danger" onclick="logout()">Logout</button>
             </div>
@@ -156,6 +157,29 @@
                         <button type="button" class="btn btn-secondary" onclick="cancelPostEdit()">Cancel</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Connections Section -->
+    <section id="connections" class="section hidden">
+        <div class="container">
+            <h2>My Connections</h2>
+            
+            <div class="connections-container">
+                <div class="connections-section">
+                    <h3>Following (<span id="followingCount">0</span>)</h3>
+                    <div id="followingList" class="user-list">
+                        <div class="loading">Loading...</div>
+                    </div>
+                </div>
+                
+                <div class="connections-section">
+                    <h3>Followers (<span id="followersCount">0</span>)</h3>
+                    <div id="followersList" class="user-list">
+                        <div class="loading">Loading...</div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>

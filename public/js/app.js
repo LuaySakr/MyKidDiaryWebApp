@@ -35,6 +35,8 @@ function showSection(sectionName) {
             loadMyPosts();
         } else if (sectionName === 'profile' && authToken) {
             loadProfile();
+        } else if (sectionName === 'connections' && authToken) {
+            loadConnections();
         } else if (sectionName === 'create-post') {
             // Only reset form if not editing (i.e., no postId set)
             if (!document.getElementById('postId') || !document.getElementById('postId').value) {
@@ -140,9 +142,13 @@ async function fetchProfile() {
             updateNavigation();
             showSection('feed');
         } else {
+            // Any error (including 401) - logout and show hero
+            console.error('Failed to fetch profile:', response.status);
             logout();
         }
     } catch (error) {
+        // Network error - logout and show hero
+        console.error('Network error fetching profile:', error);
         logout();
     }
 }
@@ -177,10 +183,13 @@ async function loadFeed() {
         if (response.ok) {
             const posts = await response.json();
             displayPosts(posts, container, false);
+        } else if (response.status === 401) {
+            logout();
         } else {
             container.innerHTML = '<div class="empty-state"><h3>Failed to load posts</h3></div>';
         }
     } catch (error) {
+        console.error('Error loading feed:', error);
         container.innerHTML = '<div class="empty-state"><h3>Network error</h3></div>';
     }
 }
@@ -199,10 +208,13 @@ async function loadMyPosts() {
         if (response.ok) {
             const posts = await response.json();
             displayPosts(posts, container, true);
+        } else if (response.status === 401) {
+            logout();
         } else {
             container.innerHTML = '<div class="empty-state"><h3>Failed to load posts</h3></div>';
         }
     } catch (error) {
+        console.error('Error loading my posts:', error);
         container.innerHTML = '<div class="empty-state"><h3>Network error</h3></div>';
     }
 }
@@ -284,11 +296,14 @@ async function handlePostSubmit(event) {
             showSuccess(postId ? 'Post updated successfully!' : 'Post created successfully!');
             resetPostForm();
             showSection('my-posts');
+        } else if (response.status === 401) {
+            logout();
         } else {
             const data = await response.json();
             showError('postError', data.message || 'Failed to save post');
         }
     } catch (error) {
+        console.error('Error submitting post:', error);
         showError('postError', 'Network error. Please try again.');
     }
 }
@@ -317,8 +332,13 @@ async function editPost(postId) {
             }
 
             handlePrivacyChange();
+        } else if (response.status === 401) {
+            logout();
+        } else {
+            alert('Failed to load post');
         }
     } catch (error) {
+        console.error('Error loading post for edit:', error);
         alert('Failed to load post');
     }
 }
@@ -339,10 +359,13 @@ async function deletePost(postId) {
         if (response.ok) {
             showSuccess('Post deleted successfully!');
             loadMyPosts();
+        } else if (response.status === 401) {
+            logout();
         } else {
             alert('Failed to delete post');
         }
     } catch (error) {
+        console.error('Error deleting post:', error);
         alert('Network error. Please try again.');
     }
 }
@@ -416,8 +439,13 @@ async function loadProfile() {
                 </div>
                 <button class="btn btn-primary" onclick="showEditProfile()">Edit Profile</button>
             `;
+        } else if (response.status === 401) {
+            logout();
+        } else {
+            profileContent.innerHTML = '<div class="empty-state"><h3>Failed to load profile</h3></div>';
         }
     } catch (error) {
+        console.error('Error loading profile:', error);
         profileContent.innerHTML = '<div class="empty-state"><h3>Failed to load profile</h3></div>';
     }
 }
@@ -557,8 +585,13 @@ async function searchUsers() {
         if (response.ok) {
             const users = await response.json();
             displayUserSearchResults(users);
+        } else if (response.status === 401) {
+            logout();
+        } else {
+            alert('Search failed. Please try again.');
         }
     } catch (error) {
+        console.error('Error searching users:', error);
         alert('Search failed. Please try again.');
     }
 }
@@ -606,12 +639,26 @@ async function followUser(userId) {
         if (response.ok) {
             showSuccess('User followed successfully!');
             await fetchProfile();
-            searchUsers(); // Refresh search results
+            
+            // Refresh connections page if it's currently active
+            const connectionsSection = document.getElementById('connections');
+            if (connectionsSection && !connectionsSection.classList.contains('hidden')) {
+                loadConnections();
+            }
+            
+            // Refresh search results if search page is active
+            const searchInput = document.getElementById('userSearch');
+            if (searchInput && searchInput.value) {
+                searchUsers();
+            }
+        } else if (response.status === 401) {
+            logout();
         } else {
             const data = await response.json();
             alert(data.message || 'Failed to follow user');
         }
     } catch (error) {
+        console.error('Follow error:', error);
         alert('Network error. Please try again.');
     }
 }
@@ -628,13 +675,105 @@ async function unfollowUser(userId) {
         if (response.ok) {
             showSuccess('User unfollowed successfully!');
             await fetchProfile();
-            searchUsers(); // Refresh search results
+            
+            // Refresh connections page if it's currently active
+            const connectionsSection = document.getElementById('connections');
+            if (connectionsSection && !connectionsSection.classList.contains('hidden')) {
+                loadConnections();
+            }
+            
+            // Refresh search results if search page is active
+            const searchInput = document.getElementById('userSearch');
+            if (searchInput && searchInput.value) {
+                searchUsers();
+            }
+        } else if (response.status === 401) {
+            logout();
         } else {
-            alert('Failed to unfollow user');
+            const data = await response.json();
+            alert(data.message || 'Failed to unfollow user');
         }
     } catch (error) {
+        console.error('Unfollow error:', error);
         alert('Network error. Please try again.');
     }
+}
+
+// Connections Functions
+async function loadConnections() {
+    try {
+        const response = await fetch(`${API_URL}/auth/profile`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        if (response.ok) {
+            const user = await response.json();
+            displayFollowing(user.following || []);
+            displayFollowers(user.followers || []);
+        } else if (response.status === 401) {
+            logout();
+        } else {
+            document.getElementById('followingList').innerHTML = '<p>Failed to load connections</p>';
+            document.getElementById('followersList').innerHTML = '<p>Failed to load connections</p>';
+        }
+    } catch (error) {
+        console.error('Error loading connections:', error);
+        document.getElementById('followingList').innerHTML = '<p>Network error</p>';
+        document.getElementById('followersList').innerHTML = '<p>Network error</p>';
+    }
+}
+
+function displayFollowing(following) {
+    const followingList = document.getElementById('followingList');
+    const followingCount = document.getElementById('followingCount');
+    
+    followingCount.textContent = following.length;
+    
+    if (following.length === 0) {
+        followingList.innerHTML = '<p class="empty-message">You are not following anyone yet</p>';
+        return;
+    }
+    
+    followingList.innerHTML = following.map(user => `
+        <div class="user-card">
+            <div class="user-info">
+                <strong>${escapeHtml(user.username)}</strong>
+            </div>
+            <button class="btn btn-danger btn-sm" onclick="unfollowUser('${user._id}')">
+                Unfollow
+            </button>
+        </div>
+    `).join('');
+}
+
+function displayFollowers(followers) {
+    const followersList = document.getElementById('followersList');
+    const followersCount = document.getElementById('followersCount');
+    
+    followersCount.textContent = followers.length;
+    
+    if (followers.length === 0) {
+        followersList.innerHTML = '<p class="empty-message">No followers yet</p>';
+        return;
+    }
+    
+    followersList.innerHTML = followers.map(user => `
+        <div class="user-card">
+            <div class="user-info">
+                <strong>${escapeHtml(user.username)}</strong>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="followBackUser('${user._id}')">
+                Follow Back
+            </button>
+        </div>
+    `).join('');
+}
+
+async function followBackUser(userId) {
+    await followUser(userId);
+    loadConnections(); // Refresh the connections view
 }
 
 // Utility Functions
